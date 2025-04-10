@@ -1,0 +1,80 @@
+{
+  "name": "datapground",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@date-io/dayjs": "^3.2.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@mui/lab": "^6.0.0-beta.27",
+    "@mui/material": "^6.4.3",
+    "@mui/x-date-pickers-pro": "^7.26.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.121",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
+    "eslint-config-prettier": "^9.1.0",
+    "lottie-react": "^2.4.1",
+    "prettier": "^3.4.1",
+    "react": "^18.3.1",
+    "react-currency-input-field": "^3.9.0",
+    "react-datepicker": "^4.21.0",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.3.5",
+    "react-hook-form": "^7.54.2",
+    "react-icons": "^5.4.0",
+    "react-otp-input": "^3.1.1",
+    "react-router-dom": "^7.1.0",
+    "react-scripts": "5.0.1",
+    "react-select": "^5.10.0",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^2.5.5",
+    "typescript": "^4.9.5",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "clean": "rimraf node_modules .parcel-cache .next dist tsconfig.tsbuildinfo",
+    "build": "react-scripts build",
+    "test": "react-scripts test --passWithNoTests",
+    "eject": "react-scripts eject",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint-fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,scss,json,md}\"",
+    "format-check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,scss,json,md}\""
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@eslint/js": "^9.15.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.2",
+    "globals": "^15.12.0",
+    "tailwindcss": "^3.4.15",
+    "typescript-eslint": "^8.16.0"
+  }
+}

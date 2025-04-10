@@ -1,0 +1,111 @@
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Regular-Italic.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Thin.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Thin-Italic.woff') format('woff');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-ExtraLight-Italic.woff') format('woff');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Light-Italic.woff') format('woff');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Medium-Italic.woff') format('woff');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-SemiBold-Italic.woff') format('woff');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Bold-Italic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Black.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BR Candor';
+  src: url('../fonts/BR-Candor-Black-Italic.woff') format('woff');
+  font-weight: 900;
+  font-style: italic;
+}

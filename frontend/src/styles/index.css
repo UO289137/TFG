@@ -1,0 +1,38 @@
+@import './fonts.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-primary: 'BR Candor', sans-serif;
+  --generator-color: #c32782;
+  --generator-light-color: #c3278233;
+  --generator-nav-bg: linear-gradient(
+    90deg,
+    #c32782 -4.54%,
+    rgba(195, 39, 130, 0.776) 43.82%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.vertical-rounded-tab {
+  --r: 20px; /* Adjusted radius */
+
+  line-height: 1; /* Adjusted height */
+  padding-inline: 0.3rem; /* Adjusted padding */
+  border-block: var(--r) solid transparent;
+  border-radius: var(--r) 0 0 var(--r) / calc(2 * var(--r));
+  -webkit-mask:
+    radial-gradient(var(--r) at 0 var(--r), transparent 90%, black 99%) 100%
+      calc(-1 * var(--r)) / var(--r) 100% repeat-y,
+    conic-gradient(black 0 0) padding-box;
+  mask:
+    radial-gradient(var(--r) at 0 var(--r), transparent 98%, black 99%) 100%
+      calc(-1 * var(--r)) / var(--r) 100% repeat-y,
+    conic-gradient(black 0 0) padding-box;
+}
+
+
+
+
+

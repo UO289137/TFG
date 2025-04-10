@@ -1,0 +1,24 @@
+
+* API endpoint: https://lyk30h0elf.execute-api.eu-west-3.amazonaws.com/generate
+
+* Json code:
+
+- THE MERLIN GENERATOR:
+{
+  "body": "{\"generator_type\": \"merlin\", \"theme\": \"Generate a dataset about AWS services with the fields: name, time, price.\", \"rows\": 100}"
+}
+
+- THE GOLD GENERATOR:
+{
+  "body": "{\"generator_type\": \"gold\", \"theme\": \"Generate the fields department, hire_date and salary simulating this is a tech company. Make them so that there is a relation between the three. The previous hire_dates correlate with better salaries mostly. And also the department is related with the range within the salary moves. I want a variety of 5 departments.\", \"rows\": 200}"
+}
+	
+- THE PREMIUM GENERATOR:
+{
+  "body": "{\"generator_type\": \"premium\", \"theme\": \"Generate football data. Name, position, date of birth, height, team he plays for, scored goals, and some description about its game. Add some other fields you find relevant.\", \"rows\": 50}"
+}
+
+- THE ORACLE GENERATOR:
+{
+  "body": "{\"generator_type\": \"oracle\", \"theme\": \"Recent news that happend in the world of sports. Title, brief description, and date. Be specific about each new in the title.\", \"rows\": 15}"
+}

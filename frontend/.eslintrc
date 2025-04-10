@@ -1,0 +1,30 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect",
+      "defaultVersion": "18.3"
+    }
+  },
+  "plugins": ["react", "react-hooks", "@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off", // Disable the rule if you want to allow `any`
+    "react/react-in-jsx-scope": "off", // Disable for Next.js
+    "react/prop-types": "off", // Not needed when using TypeScript
+    "prettier/prettier": ["error"]
+  }
+}
