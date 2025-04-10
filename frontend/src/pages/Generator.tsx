@@ -7,7 +7,7 @@ import TopBar from '../components/TopBar';
 import GeneratorIcon from '../components/Icons/GeneratorIcon';
 import GeneratorSelect from '../components/generator/Select';
 import GoldIcon from '../components/Icons/GoldIcon';
-import YdataIcon from '../components/Icons/YdataIcon';
+import CtganIcon from '../components/Icons/CtganIcon';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const Generator: React.FC = () => {
@@ -15,7 +15,7 @@ const Generator: React.FC = () => {
   const model = searchParams.get('model') || 'merlin'; // fallback a 'merlin'
   const navigate = useNavigate();
 
-  // Estados para "rows", texto, carga, tiempo y el archivo (para ydata)
+  // Estados para "rows", texto, carga, tiempo y el archivo (para ctgan)
   const [rows, setRows] = useState(70);
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -26,7 +26,7 @@ const Generator: React.FC = () => {
   const rowRanges = {
     merlin: { min: 1, max: 100000 },
     gold: { min: 1, max: 200 },
-    ydata: { min: 1, max: 50 },
+    ctgan: { min: 1, max: 50 },
   } as const;
 
   const { min, max } = rowRanges[model as keyof typeof rowRanges] || {
@@ -61,7 +61,7 @@ const Generator: React.FC = () => {
     };
   }, [loading]);
 
-  // Manejador para la subida de archivo (para ydata)
+  // Manejador para la subida de archivo (para ctgan)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
@@ -70,7 +70,7 @@ const Generator: React.FC = () => {
 
   // Función para enviar la solicitud al backend
   const handleGenerate = async () => {
-    if (model === 'ydata') {
+    if (model === 'ctgan') {
       if (!file) {
         alert('Por favor, selecciona un archivo CSV.');
         return;
@@ -83,7 +83,7 @@ const Generator: React.FC = () => {
     setLoading(true);
     try {
       let response;
-      if (model === 'ydata') {
+      if (model === 'ctgan') {
         const formData = new FormData();
         formData.append('generator_type', model);
         formData.append('file', file as Blob);
@@ -161,9 +161,9 @@ const Generator: React.FC = () => {
                       Icon: GoldIcon,
                     },
                     {
-                      value: 'ydata',
-                      label: 'Ydata Generator',
-                      Icon: YdataIcon,
+                      value: 'ctgan',
+                      label: 'CTGAN Generator',
+                      Icon: CtganIcon,
                     },
                   ],
                 },
@@ -186,7 +186,7 @@ const Generator: React.FC = () => {
       <div className="grid grid-cols-8 gap-6 mt-4">
         <div className="flex flex-col gap-3 w-full xl:col-span-6 col-span-8">
           <div className="border border-generator rounded-[5px] relative p-4">
-            {model === 'ydata' ? (
+            {model === 'ctgan' ? (
               <div>
                 <label className="block mb-2 text-[#414042]">
                   Selecciona un archivo CSV:

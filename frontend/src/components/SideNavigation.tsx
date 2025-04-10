@@ -49,7 +49,7 @@ const SideNavigation = () => {
         ? '#A077A8'
         : model === 'gold'
           ? '#1E647F'
-          : model === 'ydata'
+          : model === 'ctgan'
             ? '#59B1FE'
             : '#C32782';
     document.documentElement.style.setProperty('--generator-color', modelColor);

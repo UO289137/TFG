@@ -2,6 +2,7 @@ import logging
 import json
 import random
 import pandas as pd
+import os
 from faker import Faker
 from utils.data_utils import (
     is_name, 
@@ -13,6 +14,9 @@ from utils.data_utils import (
 )
 from utils.validation_utils import validate_config_dict
 from utils.json_utils import format_result_for_jsonl, jsonlist_to_csv
+
+from sdv.metadata import Metadata
+from sdv.single_table import CTGANSynthesizer
 
 
 class DataGenerationService:
@@ -219,13 +223,54 @@ class DataGenerationService:
         except Exception as e:
             self.logger.error(f"Error reading generated CSV: {e}")
 
-    def generate_data_ydata(
+    def generate_data_ctgan(
         self, 
+        input_file: str,
         rows: int = 20,
         output_file: str = "generations/synthetic_data_high_internet.csv"
     ):
         """
-        Stub for a potential "YDATA" generator approach.
+        Genera datos sintéticos usando CTGAN a partir de un CSV subido por el usuario.
+        1) Carga el CSV a un DataFrame.
+        2) Crea el metadata y lo ajusta.
+        3) Entrena el sintetizador CTGAN.
+        4) Genera N filas sintéticas.
+        5) Combina el dataset sintético con el original y guarda el resultado.
         """
-        self.logger.info(f"Called generate_data_ydata with rows={rows}, but method not implemented.")
-        pass
+        try:
+            self.logger.info(f"generate_data_ctgan: input_file={input_file}, rows={rows}")
+
+            # 1) Leer el CSV original
+            df_original = pd.read_csv(input_file)
+            if df_original.empty:
+                raise ValueError("El CSV subido está vacío o no contiene columnas.")
+
+            self.logger.info(f"Original CSV shape: {df_original.shape}")
+
+            # 2) Crear Metadata y detectar automáticamente
+            metadata = Metadata()
+            metadata = metadata.detect_from_dataframe(df_original)
+
+            # 3) Crear el sintetizador con la metadata (puedes personalizar parámetros)
+            synthesizer = CTGANSynthesizer(metadata=metadata)
+            self.logger.info("Entrenando CTGAN...")
+            synthesizer.fit(df_original)
+            self.logger.info("Entrenamiento finalizado.")
+
+            # 4) Generar N filas sintéticas
+            df_synthetic = synthesizer.sample(num_rows=rows)
+            self.logger.info(f"Synthetic data shape: {df_synthetic.shape}")
+
+            # 5) Combinar original + sintético (opcional, si quieres "aumentar")
+            df_augmented = pd.concat([df_original, df_synthetic], ignore_index=True)
+
+            # Crear la carpeta de salida si no existe
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+            # Guardar el CSV final
+            df_augmented.to_csv(output_file, index=False)
+            self.logger.info(f"Archivo aumentado guardado en: {output_file}")
+
+        except Exception as e:
+            self.logger.error(f"Error en generate_data_ctgan: {str(e)}")
+            raise
