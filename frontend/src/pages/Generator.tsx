@@ -236,7 +236,14 @@ const Generator: React.FC = () => {
             Output
           </h2>
           <div className="flex flex-col items-center border border-generator rounded-[5px] justify-center p-4 overflow-y-auto max-h-[300px]">
-            {csvContent ? (
+            {loading ? (
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 border-4 border-t-4 border-t-generator rounded-full animate-spin mb-2"></div>
+                <p className="text-[#414042] lg:text-sm text-xs font-primary">
+                  Cargando ...
+                </p>
+              </div>
+            ) : csvContent ? (
               <div className="w-full overflow-auto">
                 <table className="min-w-full border-collapse border border-gray-300">
                   <thead className="bg-gray-200 sticky top-0 z-10">
