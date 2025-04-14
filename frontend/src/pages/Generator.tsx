@@ -21,12 +21,13 @@ const Generator: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [csvContent, setCsvContent] = useState<string>('');
 
   // Definir los rangos para cada modelo
   const rowRanges = {
     merlin: { min: 1, max: 100000 },
     gold: { min: 1, max: 200 },
-    ctgan: { min: 1, max: 50 },
+    ctgan: { min: 1, max: 10000 },
   } as const;
 
   const { min, max } = rowRanges[model as keyof typeof rowRanges] || {
@@ -110,10 +111,14 @@ const Generator: React.FC = () => {
       if (!response.ok) {
         throw new Error('Error generating data');
       }
-
-      // Descarga del archivo generado
+      // Obtén el blob, conviértelo a texto y guárdalo en el estado:
       const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const textData = await blob.text();
+      setCsvContent(textData);
+
+      // Para la descarga, recrea el blob ya que .text() lo consume:
+      const downloadBlob = new Blob([textData], { type: 'text/csv' });
+      const downloadUrl = window.URL.createObjectURL(downloadBlob);
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = 'synthetic_data.csv';
@@ -230,18 +235,58 @@ const Generator: React.FC = () => {
           <h2 className="text-[#414042] lg:text-[20px] text-[18px] font-primary font-semibold">
             Output
           </h2>
-          <div className="flex flex-col items-center flex-grow lg:min-h-[200px] min-h-[150px] border border-generator rounded-[5px] justify-center">
-            <img
-              src="/logo-icon.png"
-              alt="logo"
-              className="object-contain lg:w-[70px] w-[60px] lg:h-[70px] h-[60px] pointer-events-none"
-            />
-            <h3 className="text-[#414042] lg:text-base text-sm font-semibold">
-              Not Result Yet
-            </h3>
-            <p className="text-[#414042] lg:text-sm text-xs font-primary">
-              The Generation is being performed
-            </p>
+          <div className="flex flex-col items-center border border-generator rounded-[5px] justify-center p-4 overflow-y-auto max-h-[300px]">
+            {csvContent ? (
+              <div className="w-full overflow-auto">
+                <table className="min-w-full border-collapse border border-gray-300">
+                  <thead className="bg-gray-200 sticky top-0 z-10">
+                    <tr>
+                      {csvContent
+                        .split('\n')[0]
+                        .split(',')
+                        .map((headerCell, idx) => (
+                          <th
+                            key={idx}
+                            className="border border-gray-300 p-2 text-left font-bold"
+                          >
+                            {headerCell}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvContent
+                      .split('\n')
+                      .slice(1)
+                      .map((line, rowIndex) => {
+                        if (line.trim() === '') return null;
+                        const cells = line.split(',');
+                        return (
+                          <tr key={rowIndex} className="hover:bg-gray-50">
+                            {cells.map((cell, cellIndex) => (
+                              <td
+                                key={cellIndex}
+                                className="border border-gray-300 p-2"
+                              >
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-[#414042] lg:text-base text-sm font-semibold">
+                  Not Result Yet
+                </h3>
+                <p className="text-[#414042] lg:text-sm text-xs font-primary">
+                  The Generation is being performed
+                </p>
+              </>
+            )}
           </div>
         </div>
 

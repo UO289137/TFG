@@ -71,7 +71,7 @@ const SideNavigation = () => {
             <img
               src="/logo-icon-transparent.png"
               alt="Logo"
-              className="h-[75px] w-[75px] mx-auto object-contain pointer-events-none"
+              className="h-[150px] w-[150px] mx-auto object-contain pointer-events-none"
             />
           </Link>
         </div>
