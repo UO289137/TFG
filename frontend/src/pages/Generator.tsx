@@ -9,6 +9,7 @@ import GeneratorSelect from '../components/generator/Select';
 import GoldIcon from '../components/Icons/GoldIcon';
 import CtganIcon from '../components/Icons/CtganIcon';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Papa from 'papaparse';
 
 const Generator: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,10 @@ const Generator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [csvContent, setCsvContent] = useState<string>('');
+  const [downloadEnabled, setDownloadEnabled] = useState(false);
+  const [fileName, setFileName] = useState('synthetic_data');
+  const [fileNameError, setFileNameError] = useState('');
+  const [themeError, setThemeError] = useState('');
 
   // Definir los rangos para cada modelo
   const rowRanges = {
@@ -40,6 +45,14 @@ const Generator: React.FC = () => {
     if (rows < min) setRows(min);
     if (rows > max) setRows(max);
   }, [model, rows, min, max]);
+
+  useEffect(() => {
+    setRows(1);
+    setText('');
+    setThemeError('');
+    setDownloadEnabled(false);
+    setCsvContent('');
+  }, [model]);
 
   // Manejador del Slider
   const handleRows = (_event: Event, newValue: number | number[]) => {
@@ -77,7 +90,12 @@ const Generator: React.FC = () => {
         return;
       }
     } else if (!text.trim()) {
-      alert('Please enter a theme.');
+      if (!text.trim()) {
+        setThemeError('Por favor, introduce un tema.');
+        return;
+      } else {
+        setThemeError('');
+      }
       return;
     }
 
@@ -117,14 +135,16 @@ const Generator: React.FC = () => {
       setCsvContent(textData);
 
       // Para la descarga, recrea el blob ya que .text() lo consume:
-      const downloadBlob = new Blob([textData], { type: 'text/csv' });
-      const downloadUrl = window.URL.createObjectURL(downloadBlob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = 'synthetic_data.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (downloadEnabled) {
+        const downloadBlob = new Blob([textData], { type: 'text/csv' });
+        const downloadUrl = window.URL.createObjectURL(downloadBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `${fileName}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (error) {
       console.error(error);
       alert('Error generating data. Please try again.');
@@ -207,10 +227,18 @@ const Generator: React.FC = () => {
               <div className="relative">
                 <textarea
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Write an explanation about the topic you want to generate data about and its fields...."
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    if (e.target.value.trim() !== '') {
+                      setThemeError('');
+                    }
+                  }}
+                  placeholder="Describe la temática y estructura que quieres que tengan tus datos."
                   className="min-h-[200px] md:min-h-[260px] w-full h-full bg-transparent outline-none border-none md:text-sm text-xs text-[#414042] placeholder:text-[#414042] resize-none overflow-hidden"
                 />
+                {themeError && (
+                  <p className="text-xs text-red-500 mt-1">{themeError}</p>
+                )}
                 <button
                   className="absolute top-0 right-0 z-10"
                   onClick={() => setText('')}
@@ -221,9 +249,13 @@ const Generator: React.FC = () => {
             )}
             <aside className="flex justify-end">
               <button
-                className="bg-generator lg:py-2 py-1.5 lg:px-6 px-5 md:text-sm text-xs rounded-lg text-white font-primary flex justify-center items-center gap-2 whitespace-nowrap"
+                className={`lg:py-2 py-1.5 lg:px-6 px-5 md:text-sm text-xs rounded-lg font-primary flex justify-center items-center gap-2 whitespace-nowrap ${
+                  loading || (downloadEnabled && fileNameError !== '')
+                    ? 'bg-gray-400 cursor-not-allowed text-black'
+                    : 'bg-generator text-white'
+                }`}
                 onClick={handleGenerate}
-                disabled={loading}
+                disabled={loading || (downloadEnabled && fileNameError !== '')}
               >
                 <PenIcon className="md:w-[22px] w-[20px] md:h-[22px] h-[20px] fill-white" />
                 {loading ? `Generating... (${elapsedTime}s)` : 'Generate'}
@@ -235,7 +267,7 @@ const Generator: React.FC = () => {
           <h2 className="text-[#414042] lg:text-[20px] text-[18px] font-primary font-semibold">
             Output
           </h2>
-          <div className="flex flex-col items-center border border-generator rounded-[5px] justify-center p-4 overflow-y-auto max-h-[300px]">
+          <div className="flex flex-col items-center border border-generator rounded-[5px] justify-center p-4 overflow-y-auto max-h-[323px]">
             {loading ? (
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 border-4 border-t-4 border-t-generator rounded-full animate-spin mb-2"></div>
@@ -244,45 +276,57 @@ const Generator: React.FC = () => {
                 </p>
               </div>
             ) : csvContent ? (
-              <div className="w-full overflow-auto">
-                <table className="min-w-full border-collapse border border-gray-300">
-                  <thead className="bg-gray-200 sticky top-0 z-10">
-                    <tr>
-                      {csvContent
-                        .split('\n')[0]
-                        .split(',')
-                        .map((headerCell, idx) => (
-                          <th
-                            key={idx}
-                            className="border border-gray-300 p-2 text-left font-bold"
-                          >
-                            {headerCell}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {csvContent
-                      .split('\n')
-                      .slice(1)
-                      .map((line, rowIndex) => {
-                        if (line.trim() === '') return null;
-                        const cells = line.split(',');
-                        return (
-                          <tr key={rowIndex} className="hover:bg-gray-50">
-                            {cells.map((cell, cellIndex) => (
-                              <td
-                                key={cellIndex}
-                                className="border border-gray-300 p-2"
-                              >
-                                {cell}
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+              <div className="w-full overflow-x-auto">
+                {(() => {
+                  // Parseamos el CSV usando PapaParse
+                  const parsedData = Papa.parse(csvContent, {
+                    header: false,
+                  }).data;
+                  // Verificamos que se obtuvo al menos una fila para el encabezado
+                  if (!parsedData || parsedData.length === 0) {
+                    return <p>No se pudo parsear el CSV.</p>;
+                  }
+                  return (
+                    <table className="min-w-full table-fixed border-collapse border border-gray-300">
+                      <thead className="bg-gray-200 sticky top-0 z-10">
+                        <tr>
+                          {parsedData[0].map((headerCell, idx) => (
+                            <th
+                              key={idx}
+                              className="border border-gray-300 p-2 text-left font-bold w-[150px] truncate"
+                            >
+                              {headerCell}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {parsedData.slice(1, 2001).map((row, rowIndex) => {
+                          // Verificamos que la fila no esté vacía
+                          if (row.every((cell) => cell.trim() === ''))
+                            return null;
+                          return (
+                            <tr key={rowIndex} className="hover:bg-gray-50">
+                              {row.map((cell, cellIndex) => (
+                                <td
+                                  key={cellIndex}
+                                  className="border border-gray-300 p-2"
+                                  style={{
+                                    height: '50px', // Fija la altura de la celda
+                                    whiteSpace: 'nowrap', // Fuerza que el contenido se mantenga en una línea
+                                    overflow: 'visible', // Permite que el contenido se muestre completo
+                                  }}
+                                >
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  );
+                })()}
               </div>
             ) : (
               <>
@@ -290,7 +334,7 @@ const Generator: React.FC = () => {
                   Not Result Yet
                 </h3>
                 <p className="text-[#414042] lg:text-sm text-xs font-primary">
-                  The Generation is being performed
+                  The Generation has not been performed
                 </p>
               </>
             )}
@@ -299,16 +343,13 @@ const Generator: React.FC = () => {
 
         {/* Panel de configuración (solo Rows) */}
         <div className="col-span-8 xl:col-span-2">
-          <span
-            className="flex items-center justify-start gap-2 text-[#414042] md:text-[16px] text-sm mt-3 xl:mt-0 font-[400] rounded-[10px] p-2 text-center"
-            style={{ background: 'var(--generator-light-color)' }}
-          >
-            <SettingsIcon className="w-[14px] h-[14px] stroke-[#414042]" />
+          <span className="flex items-center justify-start gap-2 text-[#414042] md:text-[16px] text-sm mt-3 xl:mt-0 font-[400] rounded-[10px] p-2 text-center bg-generator text-white">
+            <SettingsIcon className="w-[14px] h-[14px] stroke-[#414042] stroke-white" />
             Settings
           </span>
           <div className="mt-3">
             <div>
-              <span className="flex items-center justify-between md:text-base text-sm">
+              <span className="flex items-center justify-between md:text-base text-sm font-semibold">
                 Rows
                 <label className="p-1 bg-slate-50 rounded-md border lg:px-4 px-3 lg:py-1 py-0.8 lg:text-sm text-xs font-light">
                   {rows}
@@ -332,25 +373,77 @@ const Generator: React.FC = () => {
                 }}
               />
             </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <span className="md:text-base text-sm text-[#414042] font-semibold">
+                  Descargar archivo
+                </span>
+                <button
+                  onClick={() => setDownloadEnabled(!downloadEnabled)}
+                  className={`w-10 h-6 rounded-full ${
+                    downloadEnabled ? 'bg-generator' : 'bg-gray-300'
+                  } relative focus:outline-none`}
+                >
+                  <span
+                    className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${
+                      downloadEnabled ? 'right-1' : 'left-1'
+                    }`}
+                  ></span>
+                </button>
+              </div>
+              {downloadEnabled && (
+                <div className="mt-2">
+                  <label
+                    className="block text-[#414042] md:text-base text-sm"
+                    style={{ fontSize: '14px' }}
+                  >
+                    Nombre del archivo (sin extensión):
+                  </label>
+                  <input
+                    type="text"
+                    value={fileName}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      if (newName.trim() === '') {
+                        setFileNameError('El nombre no puede estar vacío');
+                      } else if (!/^[a-zA-Z0-9-_]+$/.test(newName)) {
+                        setFileNameError(
+                          'El nombre solo puede contener letras, números, guiones y guiones bajos'
+                        );
+                      } else {
+                        setFileNameError('');
+                      }
+                      setFileName(newName);
+                    }}
+                    className="mt-1 p-2 border rounded-md w-full"
+                  />
+                  {fileNameError && (
+                    <p className="text-xs text-red-500 mt-1">{fileNameError}</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="mt-4 border-t pt-2">
               <h3 className="md:text-base text-sm font-semibold text-gray-700">
                 Examples
               </h3>
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-2">
                 {[
                   'Genera datos sobre los pacientes de un hospital. Quiero que añadas un identificador, grupo sanguineo, nombre, nacionalidad y enfermedad.',
                   'Genera datos sobre jugadores de baloncesto reales. Dame su nombre, edad, fecha de nacimiento, altura y una breve descripción.',
                   'Genera datos sobre una empresa. Dame el nombre de los empleados, departamento, salario y fecha de contratación. Quiero que exista una relación coherente entre el salario y los demás campos.',
                   'Genera datos de actualidad sobre las noticias en el mundo. Quiero el título de la noticia, fecha y breve descripción.',
                   'Dame los mejores lugares para ver en la ciudad de Budapest. Quiero que me des el nombre del lugar, ubicación, año de referencia y breve historia.',
-                ].map((item, index) => (
-                  <li
-                    key={index}
-                    className="flex items-center gap-2 md:text-sm text-xs text-gray-700"
-                  >
-                    {item}
-                  </li>
+                ].map((item, index, arr) => (
+                  <React.Fragment key={index}>
+                    <li className="md:text-sm text-xs text-gray-700 py-2">
+                      {item}
+                    </li>
+                    {index < arr.length - 1 && (
+                      <hr className="border-t border-gray-300 my-2" />
+                    )}
+                  </React.Fragment>
                 ))}
               </ul>
             </div>
