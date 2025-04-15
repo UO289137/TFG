@@ -247,6 +247,11 @@ class DataGenerationService:
 
             self.logger.info(f"Original CSV shape: {df_original.shape}")
 
+            # Si el DataFrame tiene más de 750 entradas, seleccionar 750 aleatoriamente
+            if df_original.shape[0] > 10000:
+                df_original = df_original.sample(n=10000, random_state=42)
+                self.logger.info("Se han seleccionado 10.000 entradas aleatorias para el entrenamiento.")
+
             # 2) Crear Metadata y detectar automáticamente
             metadata = Metadata()
             metadata = metadata.detect_from_dataframe(df_original)

@@ -116,7 +116,6 @@ const Generator: React.FC = () => {
     }
   };
 
-  // Función para enviar la solicitud al backend
   const handleGenerate = async () => {
     if (model === 'ctgan') {
       if (!file) {
@@ -124,16 +123,15 @@ const Generator: React.FC = () => {
         return;
       }
     } else if (!text.trim()) {
-      if (!text.trim()) {
-        setThemeError('Por favor, introduce un tema.');
-        return;
-      } else {
-        setThemeError('');
-      }
+      setThemeError('Por favor, introduce un tema.');
       return;
     }
-
     setLoading(true);
+    // Crear un AbortController para poder cancelar la petición
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 300000); // 300000 ms = 300 segundos
     try {
       let response;
       if (model === 'ctgan') {
@@ -141,10 +139,10 @@ const Generator: React.FC = () => {
         formData.append('generator_type', model);
         formData.append('file', file as Blob);
         formData.append('rows', rows.toString());
-
         response = await fetch('http://localhost:5000/generate', {
           method: 'POST',
           body: formData,
+          signal: controller.signal, // Asociar la señal al fetch
         });
       } else {
         const payload = {
@@ -152,14 +150,13 @@ const Generator: React.FC = () => {
           theme: text,
           rows: rows,
         };
-
         response = await fetch('http://localhost:5000/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          signal: controller.signal, // Asociar la señal al fetch
         });
       }
-
       if (!response.ok) {
         throw new Error('Error generating data');
       }
@@ -167,7 +164,6 @@ const Generator: React.FC = () => {
       const blob = await response.blob();
       const textData = await blob.text();
       setCsvContent(textData);
-
       // Para la descarga, recrea el blob ya que .text() lo consume:
       if (downloadEnabled) {
         const downloadBlob = new Blob([textData], { type: 'text/csv' });
@@ -179,10 +175,18 @@ const Generator: React.FC = () => {
         a.click();
         document.body.removeChild(a);
       }
-    } catch (error) {
-      console.error(error);
-      alert('Error generating data. Please try again.');
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        // Si la petición se aborta por timeout, notificamos al usuario
+        alert(
+          'La solicitud ha tardado más de 300 segundos y ha sido cancelada. Inténtalo nuevamente.'
+        );
+      } else {
+        console.error(error);
+        alert('Error generating data. Please try again.');
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
