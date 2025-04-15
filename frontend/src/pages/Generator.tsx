@@ -233,9 +233,14 @@ const Generator: React.FC = () => {
                       setThemeError('');
                     }
                   }}
+                  maxLength={500}
                   placeholder="Describe la temática y estructura que quieres que tengan tus datos."
-                  className="min-h-[200px] md:min-h-[260px] w-full h-full bg-transparent outline-none border-none md:text-sm text-xs text-[#414042] placeholder:text-[#414042] resize-none overflow-hidden"
+                  className="min-h-[200px] md:min-h-[260px] w-[93%] h-full bg-transparent outline-none border-none md:text-sm text-xs text-[#414042] placeholder:text-[#414042] resize-none overflow-hidden"
                 />
+                {/* Contador de caracteres en la parte inferior del textarea */}
+                <p className="text-xs text-gray-500 mt-1 text-right">
+                  {text.length} / 500 caracteres
+                </p>
                 {themeError && (
                   <p className="text-xs text-red-500 mt-1">{themeError}</p>
                 )}
