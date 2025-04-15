@@ -78,7 +78,41 @@ const Generator: React.FC = () => {
   // Manejador para la subida de archivo (para ctgan)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const fileName = selectedFile.name.toLowerCase();
+      // Validación de extensión .csv
+      if (!fileName.endsWith('.csv')) {
+        alert('Por favor, selecciona un archivo CSV.');
+        e.target.value = ''; // Reiniciar el input
+        setFile(null); // Asegurarse de no almacenar el archivo en el estado
+        return;
+      }
+      // Validación del contenido del CSV: al menos 2 muestras de datos (excluyendo la cabecera)
+      Papa.parse(selectedFile, {
+        complete: (results) => {
+          // Si se ignoran líneas vacías, conviene usar skipEmptyLines: true en la configuración
+          // y luego filtrar el arreglo si es necesario.
+          const totalFilas = results.data.length;
+          // Se asume que la primera línea es la cabecera.
+          if (totalFilas - 1 < 2) {
+            alert(
+              'El archivo CSV debe contener al menos 2 entradas de datos (excluyendo la cabecera).'
+            );
+            e.target.value = ''; // Reiniciar el input en caso de error
+            setFile(null);
+            return;
+          }
+          // Si pasa las validaciones, se guarda el archivo
+          setFile(selectedFile);
+        },
+        error: (error) => {
+          alert('Error al procesar el archivo CSV: ' + error.message);
+          e.target.value = ''; // Reiniciar input en caso de error en la lectura
+          setFile(null);
+        },
+        // Opcional: Ignorar líneas vacías
+        skipEmptyLines: true,
+      });
     }
   };
 
