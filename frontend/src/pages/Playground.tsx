@@ -11,9 +11,6 @@ const WelcomeScreen: React.FC = () => {
           <h1 className="text-4xl font-bold text-gray-800">
             Bienvenido a mi TFG
           </h1>
-          <p className="text-md text-gray-600 mt-2">
-            Presentación profesional y seria
-          </p>
         </header>
         <section className="mb-6">
           <div className="space-y-1 text-gray-700 text-lg">

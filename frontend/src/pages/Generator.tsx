@@ -30,8 +30,8 @@ const Generator: React.FC = () => {
 
   // Definir los rangos para cada modelo
   const rowRanges = {
-    merlin: { min: 1, max: 100000 },
-    gold: { min: 1, max: 200 },
+    merlin: { min: 1, max: 10000 },
+    gold: { min: 1, max: 100 },
     ctgan: { min: 1, max: 10000 },
   } as const;
 
