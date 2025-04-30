@@ -17,6 +17,7 @@ from utils.json_utils import format_result_for_jsonl, jsonlist_to_csv
 
 from sdv.metadata import Metadata
 from sdv.single_table import CTGANSynthesizer
+from sdv.single_table import GaussianCopulaSynthesizer
 
 
 class DataGenerationService:
@@ -123,7 +124,7 @@ class DataGenerationService:
         rows: int = 1000, 
         vary_names: bool = True, 
         vary_countries: bool = True, 
-        output_file: str = "generations/merlin_data.csv"
+        output_file: str = "generations/synthetic_data_merlin.csv"
     ):
         """
         Generates data using a "Merlin" approach: obtains a JSON config from OpenAI, 
@@ -169,7 +170,7 @@ class DataGenerationService:
         self, 
         theme: str, 
         rows: int = 50, 
-        output_file: str = "generations/gold_data.csv"
+        output_file: str = "generations/synthetic_data_gold.csv"
     ):
         """
         Generate a CSV file with "high-quality" synthetic data based on a theme 
@@ -227,7 +228,7 @@ class DataGenerationService:
         self, 
         input_file: str,
         rows: int = 20,
-        output_file: str = "generations/synthetic_data_high_internet.csv"
+        output_file: str = "generations/synthetic_data_ctgan.csv"
     ):
         """
         Genera datos sintéticos usando CTGAN a partir de un CSV subido por el usuario.
@@ -242,24 +243,27 @@ class DataGenerationService:
 
             # 1) Leer el CSV original
             df_original = pd.read_csv(input_file)
+            df_training = None
             if df_original.empty:
                 raise ValueError("El CSV subido está vacío o no contiene columnas.")
 
             self.logger.info(f"Original CSV shape: {df_original.shape}")
 
-            # Si el DataFrame tiene más de 750 entradas, seleccionar 750 aleatoriamente
+            # Si el DataFrame tiene más de 10000 entradas, seleccionar 10000 aleatoriamente
             if df_original.shape[0] > 10000:
-                df_original = df_original.sample(n=10000, random_state=42)
+                df_training = df_original.sample(n=10000, random_state=42)
                 self.logger.info("Se han seleccionado 10.000 entradas aleatorias para el entrenamiento.")
+            else:
+                df_training = df_original
 
             # 2) Crear Metadata y detectar automáticamente
             metadata = Metadata()
-            metadata = metadata.detect_from_dataframe(df_original)
+            metadata = metadata.detect_from_dataframe(df_training)
 
             # 3) Crear el sintetizador con la metadata (puedes personalizar parámetros)
             synthesizer = CTGANSynthesizer(metadata=metadata)
             self.logger.info("Entrenando CTGAN...")
-            synthesizer.fit(df_original)
+            synthesizer.fit(df_training)
             self.logger.info("Entrenamiento finalizado.")
 
             # 4) Generar N filas sintéticas
@@ -278,4 +282,65 @@ class DataGenerationService:
 
         except Exception as e:
             self.logger.error(f"Error en generate_data_ctgan: {str(e)}")
+            raise
+
+    def generate_data_gaussian(
+        self, 
+        input_file: str,
+        rows: int = 20,
+        output_file: str = "generations/synthetic_data_gaussian.csv"
+    ):
+        """
+        Genera datos sintéticos usando GaussianCopula a partir de un CSV subido por el usuario.
+        1) Carga el CSV a un DataFrame.
+        2) Crea el metadata y lo ajusta.
+        3) Entrena el sintetizador GaussianCopula.
+        4) Genera N filas sintéticas.
+        5) Combina el dataset sintético con el original y guarda el resultado.
+        """
+        try:
+            self.logger.info(f"generate_data_gaussian: input_file={input_file}, rows={rows}")
+
+            # 1) Leer el CSV original
+            df_original = pd.read_csv(input_file)
+            df_training = None
+            if df_original.empty:
+                raise ValueError("El CSV subido está vacío o no contiene columnas.")
+
+            self.logger.info(f"Original CSV shape: {df_original.shape}")
+
+            # Si el DataFrame tiene más de 10000 entradas, seleccionar 10000 aleatoriamente
+            if df_original.shape[0] > 10000:
+                df_training = df_original.sample(n=10000, random_state=42)
+                self.logger.info("Se han seleccionado 10.000 entradas aleatorias para el entrenamiento.")
+            else :
+                df_training = df_original
+
+            # 2) Crear Metadata y detectar automáticamente
+            metadata = Metadata()
+            metadata = metadata.detect_from_dataframe(df_training)
+
+            # 3) Crear el sintetizador con la metadata (puedes personalizar parámetros)
+            synthesizer = GaussianCopulaSynthesizer(metadata=metadata)
+            self.logger.info("Entrenando GaussianCopulaSynthesizer...")
+            synthesizer.fit(df_training)
+            self.logger.info("Entrenamiento finalizado.")
+
+
+            # 4) Generar N filas sintéticas
+            df_synthetic = synthesizer.sample(num_rows=rows)
+            self.logger.info(f"Synthetic data shape: {df_synthetic.shape}")
+
+            # 5) Combinar original + sintético (opcional, si quieres "aumentar")
+            df_augmented = pd.concat([df_original, df_synthetic], ignore_index=True)
+
+            # Crear la carpeta de salida si no existe
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+            # Guardar el CSV final
+            df_augmented.to_csv(output_file, index=False)
+            self.logger.info(f"Archivo aumentado guardado en: {output_file}")
+
+        except Exception as e:
+            self.logger.error(f"Error en generate_data_gaussian: {str(e)}")
             raise

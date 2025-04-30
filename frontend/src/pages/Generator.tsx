@@ -33,6 +33,7 @@ const Generator: React.FC = () => {
     merlin: { min: 1, max: 10000 },
     gold: { min: 1, max: 100 },
     ctgan: { min: 1, max: 10000 },
+    gaussian: { min: 1, max: 10000 },
   } as const;
 
   const { min, max } = rowRanges[model as keyof typeof rowRanges] || {
@@ -117,7 +118,7 @@ const Generator: React.FC = () => {
   };
 
   const handleGenerate = async () => {
-    if (model === 'ctgan') {
+    if (model === 'ctgan' || model === 'gaussian') {
       if (!file) {
         alert('Por favor, selecciona un archivo CSV.');
         return;
@@ -134,7 +135,7 @@ const Generator: React.FC = () => {
     }, 300000); // 300000 ms = 300 segundos
     try {
       let response;
-      if (model === 'ctgan') {
+      if (model === 'ctgan' || model === 'gaussian') {
         const formData = new FormData();
         formData.append('generator_type', model);
         formData.append('file', file as Blob);
@@ -228,6 +229,11 @@ const Generator: React.FC = () => {
                       label: 'CTGAN Generator',
                       Icon: CtganIcon,
                     },
+                    {
+                      value: 'gaussian',
+                      label: 'Gaussian Generator',
+                      Icon: CtganIcon,
+                    },
                   ],
                 },
               ]}
@@ -249,7 +255,7 @@ const Generator: React.FC = () => {
       <div className="grid grid-cols-8 gap-6 mt-4">
         <div className="flex flex-col gap-3 w-full xl:col-span-6 col-span-8">
           <div className="border border-generator rounded-[5px] relative p-4">
-            {model === 'ctgan' ? (
+            {model === 'ctgan' || model === 'gaussian' ? (
               <div>
                 <label className="block mb-2 text-[#414042]">
                   Selecciona un archivo CSV:

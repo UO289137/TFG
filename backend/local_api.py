@@ -63,6 +63,44 @@ def generate():
                 as_attachment=True,
                 download_name="synthetic_data.csv"
             )
+        elif 'generator_type' in request.form and request.form['generator_type'].lower() == 'gaussian':
+            generator_type = request.form['generator_type']
+            rows = int(request.form.get('rows', 100))
+
+            uploaded_file = request.files.get('file')
+            if not uploaded_file:
+                return jsonify({"error": "No file was uploaded"}), 400
+
+            # Crear la carpeta tmp si no existe
+            os.makedirs("tmp", exist_ok=True)
+
+            # Nombre para el CSV subido
+            input_filename = f"{generator_type}_{uuid.uuid4().hex}_input.csv"
+            input_filepath = os.path.join("tmp", input_filename)
+            uploaded_file.save(input_filepath)
+
+            # Nombre para el CSV final
+            output_filename = f"{generator_type}_{uuid.uuid4().hex}_augmented.csv"
+            output_filepath = os.path.join("tmp", output_filename)
+
+            # Llamamos a nuestra nueva función
+            data_gen_service.generate_data_gaussian(
+                input_file=input_filepath,
+                rows=rows,
+                output_file=output_filepath
+            )
+
+            # Verificar que se haya creado el CSV
+            if not os.path.exists(output_filepath):
+                return jsonify({"error": "CSV not created"}), 500
+
+            # Responder con el CSV
+            return send_file(
+                output_filepath,
+                mimetype="text/csv",
+                as_attachment=True,
+                download_name="synthetic_data.csv"
+            )
 
         # De lo contrario, tratamos JSON (merlin, gold, etc.)
         data = request.get_json()
