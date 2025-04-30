@@ -102,7 +102,7 @@ def generate():
                 download_name="synthetic_data.csv"
             )
 
-        # De lo contrario, tratamos JSON (merlin, gold, etc.)
+        # De lo contrario, tratamos JSON (merlin, gold, real etc.)
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON payload provided"}), 400
@@ -129,6 +129,12 @@ def generate():
             )
         elif generator_type.lower() == "gold":
             data_gen_service.generate_data_gold(
+                theme=theme,
+                rows=rows,
+                output_file=filepath
+            )
+        elif generator_type.lower() == "real":
+            data_gen_service.generate_data_real(
                 theme=theme,
                 rows=rows,
                 output_file=filepath

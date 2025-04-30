@@ -178,7 +178,7 @@ class DataGenerationService:
         """
         self.logger.info(f"Starting GOLD generation for theme '{theme}' with {rows} rows.")
         # Constants
-        MAX_ROWS = 200
+        MAX_ROWS = 100
         MIN_ROWS = 1
 
         # Basic validation
@@ -194,11 +194,71 @@ class DataGenerationService:
         # Build prompt
         prompt = (
             f"Generate {rows} valid, newline-separated JSONL entries about: {theme}. "
-            f"All data must be synthetic, make sure if there are any names that you anonimize them for data compliance, make up a name."
+            f"All data must be synthetic, even if before was said otherwise, make sure if there are any names that you anonimize them for data compliance, make up a name."
             f"Ensure each entry has the exact same fields."
             f"including a unique 'id' field for each line. Each JSON entry should be on its own line."
             f"Containing only simple key-value pairs. Do not include any nested dictionaries or arrays that contain objects."
         )
+        result = self.openai_service.chat_openai(prompt)
+        # Extract multiple JSON objects from the raw text
+        try:
+            result = format_result_for_jsonl(result)
+            self.logger.info("\nThis is the corrected JSON content:\n" + result)
+        except Exception as e:
+            error_message = f"Error processing the OpenAI response: {e}"
+            self.logger.error(error_message)
+            return
+
+        # Split into lines
+        jsonl_entries = result.strip().split("\n")
+        self.logger.info(f"Received {len(jsonl_entries)} JSONL entries from the model.")
+
+        # Convert to CSV
+        jsonlist_to_csv(jsonl_entries, output_file, self.logger)
+
+        # (Optional) You could add a row-count check here
+        try:
+            df = pd.read_csv(output_file)
+            if len(df) < rows * 0.75:
+                self.logger.error("CSV does not meet the minimum row requirement (75%).")
+        except Exception as e:
+            self.logger.error(f"Error reading generated CSV: {e}")
+    
+    def generate_data_real(
+        self, 
+        theme: str, 
+        rows: int = 50, 
+        output_file: str = "generations/synthetic_data_real.csv"
+    ):
+        """
+        Generate a CSV file with "high-quality" synthetic data based on a theme 
+        by directly requesting JSONL from OpenAI and then converting it to CSV.
+        """
+        self.logger.info(f"Starting REAL generation for theme '{theme}' with {rows} rows.")
+        # Constants
+        MAX_ROWS = 100
+        MIN_ROWS = 1
+
+        # Basic validation
+        if rows < MIN_ROWS:
+            error_message = "Number of rows cannot be < 1."
+            self.logger.error(error_message)
+            return
+        if rows > MAX_ROWS:
+            error_message = "Row limit exceeded (max 200 for GOLD)."
+            self.logger.error(error_message)
+            return
+
+        # Build prompt
+        prompt = (
+            f"Generate {rows} valid, newline-separated JSONL entries about: {theme}. "
+            f"All data must be real, even if previously in the message it was said otherwise, ignore it, data must be REAL. Make sure if there are any available sources of real known data from the real world to use those."
+            f"Since we want the user to recognize the data as coming from real sources, so make sure you try to find real world known data about the previously specified information. "
+            f"Ensure each entry has the exact same fields."
+            f"including a unique 'id' field for each line. Each JSON entry should be on its own line."
+            f"Containing only simple key-value pairs. Do not include any nested dictionaries or arrays that contain objects."
+        )
+
         result = self.openai_service.chat_openai(prompt)
         # Extract multiple JSON objects from the raw text
         try:

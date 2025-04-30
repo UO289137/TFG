@@ -7,7 +7,9 @@ import TopBar from '../components/TopBar';
 import GeneratorIcon from '../components/Icons/GeneratorIcon';
 import GeneratorSelect from '../components/generator/Select';
 import GoldIcon from '../components/Icons/GoldIcon';
+import RealIcon from '../components/Icons/RealIcon';
 import CtganIcon from '../components/Icons/CtganIcon';
+import GaussianIcon from '../components/Icons/GaussianIcon';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Papa from 'papaparse';
 
@@ -32,6 +34,7 @@ const Generator: React.FC = () => {
   const rowRanges = {
     merlin: { min: 1, max: 10000 },
     gold: { min: 1, max: 100 },
+    real: { min: 1, max: 100 },
     ctgan: { min: 1, max: 10000 },
     gaussian: { min: 1, max: 10000 },
   } as const;
@@ -225,6 +228,11 @@ const Generator: React.FC = () => {
                       Icon: GoldIcon,
                     },
                     {
+                      value: 'real',
+                      label: 'Real Generator',
+                      Icon: RealIcon,
+                    },
+                    {
                       value: 'ctgan',
                       label: 'CTGAN Generator',
                       Icon: CtganIcon,
@@ -232,7 +240,7 @@ const Generator: React.FC = () => {
                     {
                       value: 'gaussian',
                       label: 'Gaussian Generator',
-                      Icon: CtganIcon,
+                      Icon: GaussianIcon,
                     },
                   ],
                 },
