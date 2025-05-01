@@ -86,9 +86,17 @@ class WebAPI:
                 if not gtype or not theme:
                     return jsonify({"error": "Missing 'generator_type' or 'theme'"}), 400
 
-                os.makedirs("tmp", exist_ok=True)
+               # Obtén la ruta del directorio padre
+                current_dir = os.path.dirname(__file__)
+                parent_dir  = os.path.abspath(os.path.join(current_dir, os.pardir))
+
+                # Apunta al tmp/ que está un nivel arriba
+                tmp_dir = os.path.join(parent_dir, "tmp")
+                os.makedirs(tmp_dir, exist_ok=True)
+
+                # Genera el nombre y la ruta del archivo dentro de ese tmp
                 filename = f"{gtype}_{uuid.uuid4().hex}.csv"
-                filepath = os.path.join("tmp", filename)
+                filepath = os.path.join(tmp_dir, filename)
 
                 if gtype == "merlin":
                     self.data_gen_service.generate_data_merlin(
@@ -124,8 +132,3 @@ class WebAPI:
 
     def run(self, host="0.0.0.0", port=5000, debug=True):
         self.app.run(host=host, port=port, debug=debug)
-
-
-if __name__ == "__main__":
-    api = WebAPI()
-    api.run()
