@@ -1,161 +1,131 @@
-# app.py (tu Flask principal)
-from flask import Flask, request, send_file, make_response, jsonify
-from flask_cors import CORS
+# local_api.py
+
 import os
 import uuid
+import logging
 
-# Import your service classes
+from flask import Flask, request, send_file, jsonify
+from flask_cors import CORS
+
 from services.openai_service import OpenAIService
 from services.translator_service import TranslatorService
 from services.json_generation_service import JSONGenerationService
 from services.data_generation_service import DataGenerationService
+from utils.logger_config import LoggerUtils
 
-# Logger if you need it
-from utils.logger_config import setup_logger
-logger = setup_logger("my_logger", "app.log")
+class WebAPI:
+    """
+    Sub­sistema Web API que expone el endpoint /generate y orquesta
+    los servicios de generación de datos.
+    """
 
-app = Flask(__name__)
-CORS(app)
+    def __init__(self,
+                 logger_name: str = "my_logger",
+                 log_file: str = "app.log"):
+        # Logger
+        self.logger: logging.Logger = LoggerUtils.setup_logger(logger_name, log_file)
 
-openai_service = OpenAIService(logger=logger, model_name="gpt-4o-mini")
-translator_service = TranslatorService(logger=logger)
-json_gen_service = JSONGenerationService(openai_service, logger=logger)
-data_gen_service = DataGenerationService(translator_service, openai_service, logger=logger)
+        # Flask app
+        self.app = Flask(__name__)
+        CORS(self.app)
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    try:
-        if 'generator_type' in request.form and request.form['generator_type'].lower() == 'ctgan':
-            generator_type = request.form['generator_type']
-            rows = int(request.form.get('rows', 100))
+        # Servicios
+        self.openai_service      = OpenAIService(self.logger, model_name="gpt-4o-mini")
+        self.translator_service  = TranslatorService(self.logger)
+        self.json_gen_service    = JSONGenerationService(self.openai_service, self.logger)
+        self.data_gen_service    = DataGenerationService(self.translator_service,
+                                                         self.openai_service,
+                                                         self.logger)
 
-            uploaded_file = request.files.get('file')
-            if not uploaded_file:
-                return jsonify({"error": "No file was uploaded"}), 400
+        # Registrar rutas
+        self._register_routes()
 
-            # Crear la carpeta tmp si no existe
-            os.makedirs("tmp", exist_ok=True)
+    def _register_routes(self):
+        @self.app.route("/generate", methods=["POST"])
+        def generate():
+            try:
+                # --- CTGAN / Gaussian uploads (form-data) ---
+                if 'generator_type' in request.form:
+                    gtype = request.form['generator_type'].lower()
+                    rows  = int(request.form.get('rows', 100))
+                    file_ = request.files.get('file')
+                    if not file_:
+                        return jsonify({"error": "No file was uploaded"}), 400
 
-            # Nombre para el CSV subido
-            input_filename = f"{generator_type}_{uuid.uuid4().hex}_input.csv"
-            input_filepath = os.path.join("tmp", input_filename)
-            uploaded_file.save(input_filepath)
+                    os.makedirs("tmp", exist_ok=True)
+                    in_name  = f"{gtype}_{uuid.uuid4().hex}_input.csv"
+                    in_path  = os.path.join("tmp", in_name)
+                    file_.save(in_path)
 
-            # Nombre para el CSV final
-            output_filename = f"{generator_type}_{uuid.uuid4().hex}_augmented.csv"
-            output_filepath = os.path.join("tmp", output_filename)
+                    out_name = f"{gtype}_{uuid.uuid4().hex}_augmented.csv"
+                    out_path = os.path.join("tmp", out_name)
 
-            # Llamamos a nuestra nueva función
-            data_gen_service.generate_data_ctgan(
-                input_file=input_filepath,
-                rows=rows,
-                output_file=output_filepath
-            )
+                    if gtype == 'ctgan':
+                        self.data_gen_service.generate_data_ctgan(in_path, rows, out_path)
+                    elif gtype == 'gaussian':
+                        self.data_gen_service.generate_data_gaussian(in_path, rows, out_path)
+                    else:
+                        return jsonify({"error": f"Unknown generator_type: {gtype}"}), 400
 
-            # Verificar que se haya creado el CSV
-            if not os.path.exists(output_filepath):
-                return jsonify({"error": "CSV not created"}), 500
+                    if not os.path.exists(out_path):
+                        return jsonify({"error": "CSV not created"}), 500
 
-            # Responder con el CSV
-            return send_file(
-                output_filepath,
-                mimetype="text/csv",
-                as_attachment=True,
-                download_name="synthetic_data.csv"
-            )
-        elif 'generator_type' in request.form and request.form['generator_type'].lower() == 'gaussian':
-            generator_type = request.form['generator_type']
-            rows = int(request.form.get('rows', 100))
+                    return send_file(out_path,
+                                     mimetype="text/csv",
+                                     as_attachment=True,
+                                     download_name="synthetic_data.csv")
 
-            uploaded_file = request.files.get('file')
-            if not uploaded_file:
-                return jsonify({"error": "No file was uploaded"}), 400
+                # --- JSON-based generators (Merlin/Gold/Real) ---
+                data = request.get_json()
+                if not data:
+                    return jsonify({"error": "No JSON payload provided"}), 400
 
-            # Crear la carpeta tmp si no existe
-            os.makedirs("tmp", exist_ok=True)
+                gtype = data.get("generator_type", "").lower()
+                theme = data.get("theme", "")
+                rows  = data.get("rows", 100)
+                if not gtype or not theme:
+                    return jsonify({"error": "Missing 'generator_type' or 'theme'"}), 400
 
-            # Nombre para el CSV subido
-            input_filename = f"{generator_type}_{uuid.uuid4().hex}_input.csv"
-            input_filepath = os.path.join("tmp", input_filename)
-            uploaded_file.save(input_filepath)
+                os.makedirs("tmp", exist_ok=True)
+                filename = f"{gtype}_{uuid.uuid4().hex}.csv"
+                filepath = os.path.join("tmp", filename)
 
-            # Nombre para el CSV final
-            output_filename = f"{generator_type}_{uuid.uuid4().hex}_augmented.csv"
-            output_filepath = os.path.join("tmp", output_filename)
+                if gtype == "merlin":
+                    self.data_gen_service.generate_data_merlin(
+                        theme=theme,
+                        json_generation_service=self.json_gen_service,
+                        rows=rows,
+                        vary_names=True,
+                        vary_countries=True,
+                        output_file=filepath
+                    )
+                elif gtype == "gold":
+                    self.data_gen_service.generate_data_gold(theme=theme,
+                                                            rows=rows,
+                                                            output_file=filepath)
+                elif gtype == "real":
+                    self.data_gen_service.generate_data_real(theme=theme,
+                                                            rows=rows,
+                                                            output_file=filepath)
+                else:
+                    return jsonify({"error": f"Unknown generator_type: {gtype}"}), 400
 
-            # Llamamos a nuestra nueva función
-            data_gen_service.generate_data_gaussian(
-                input_file=input_filepath,
-                rows=rows,
-                output_file=output_filepath
-            )
+                if not os.path.exists(filepath):
+                    return jsonify({"error": "CSV not created"}), 500
 
-            # Verificar que se haya creado el CSV
-            if not os.path.exists(output_filepath):
-                return jsonify({"error": "CSV not created"}), 500
+                return send_file(filepath,
+                                 mimetype="text/csv",
+                                 as_attachment=True,
+                                 download_name="synthetic_data.csv")
 
-            # Responder con el CSV
-            return send_file(
-                output_filepath,
-                mimetype="text/csv",
-                as_attachment=True,
-                download_name="synthetic_data.csv"
-            )
+            except Exception as e:
+                self.logger.exception("Error in /generate endpoint")
+                return jsonify({"error": str(e)}), 500
 
-        # De lo contrario, tratamos JSON (merlin, gold, real etc.)
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No JSON payload provided"}), 400
-
-        generator_type = data.get("generator_type")
-        theme = data.get("theme", "")
-        rows = data.get("rows", 100)
-
-        if not generator_type or not theme:
-            return jsonify({"error": "Missing 'generator_type' or 'theme'"}), 400
-
-        os.makedirs("tmp", exist_ok=True)
-        filename = f"{generator_type}_{uuid.uuid4().hex}.csv"
-        filepath = os.path.join("tmp", filename)
-
-        if generator_type.lower() == "merlin":
-            data_gen_service.generate_data_merlin(
-                theme=theme,
-                json_generation_service=json_gen_service,
-                rows=rows,
-                vary_names=True,
-                vary_countries=True,
-                output_file=filepath
-            )
-        elif generator_type.lower() == "gold":
-            data_gen_service.generate_data_gold(
-                theme=theme,
-                rows=rows,
-                output_file=filepath
-            )
-        elif generator_type.lower() == "real":
-            data_gen_service.generate_data_real(
-                theme=theme,
-                rows=rows,
-                output_file=filepath
-            )
-        else:
-            return jsonify({"error": f"Unknown generator_type: {generator_type}"}), 400
-
-        if not os.path.exists(filepath):
-            return jsonify({"error": "CSV not created"}), 500
-
-        return send_file(
-            filepath,
-            mimetype="text/csv",
-            as_attachment=True,
-            download_name="synthetic_data.csv"
-        )
-
-    except Exception as e:
-        logger.exception("Error in /generate endpoint")
-        return jsonify({"error": str(e)}), 500
+    def run(self, host="0.0.0.0", port=5000, debug=True):
+        self.app.run(host=host, port=port, debug=debug)
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    api = WebAPI()
+    api.run()

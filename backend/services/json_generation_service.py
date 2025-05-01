@@ -1,7 +1,7 @@
 import json
 import logging
-from utils.json_utils import extract_low_result_json
-from utils.validation_utils import validate_config_dict
+from utils.json_utils import JSONUtils
+from utils.validation_utils import ValidationUtils
 
 class JSONGenerationService:
     """
@@ -26,12 +26,12 @@ class JSONGenerationService:
         raw_response = self.openai_service.chat_openai(prompt)
 
         # Extract the JSON part from the response
-        json_str = extract_low_result_json(raw_response)
+        json_str = JSONUtils.extract_low_result_json(raw_response)
         config_dict = json.loads(json_str)
 
         # Validate format
         self.logger.info("Validating the format of the generated JSON.")
-        if not validate_config_dict(config_dict):
+        if not ValidationUtils.validate_config_dict(config_dict):
             raise ValueError("Generated JSON config is invalid or incomplete.")
 
         return config_dict

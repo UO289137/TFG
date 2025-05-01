@@ -4,16 +4,9 @@ import random
 import pandas as pd
 import os
 from faker import Faker
-from utils.data_utils import (
-    is_name, 
-    is_id, 
-    is_country, 
-    generate_ids, 
-    generate_country,
-    generate_random_date
-)
-from utils.validation_utils import validate_config_dict
-from utils.json_utils import format_result_for_jsonl, jsonlist_to_csv
+from utils.data_utils import DataUtils 
+from utils.validation_utils import ValidationUtils
+from utils.json_utils import JSONUtils
 
 from sdv.metadata import Metadata
 from sdv.single_table import CTGANSynthesizer
@@ -42,7 +35,7 @@ class DataGenerationService:
         """
         Generate a CSV file based on a configuration dictionary.
         """
-        if not validate_config_dict(config):
+        if not ValidationUtils.validate_config_dict(config):
             raise ValueError("The provided config dictionary is invalid.")
 
         data = {}
@@ -54,8 +47,8 @@ class DataGenerationService:
             if col_type == 'string':
                 values = properties['values']
                 # Basic checks to see if they're mostly names or mostly countries
-                name_count = sum(1 for v in values if is_name(v))
-                country_count = sum(1 for v in values if is_country(v, self.translator_service.translate_text))
+                name_count = sum(1 for v in values if DataUtils.is_name(v))
+                country_count = sum(1 for v in values if DataUtils.is_country(v, self.translator_service.translate_text))
                 threshold = 0.5
                 total_values = len(values)
 
@@ -64,17 +57,17 @@ class DataGenerationService:
                     data[column_name] = [self._faker_name() for _ in range(num_rows)]
                 elif vary_countries and (country_count / total_values) >= threshold:
                     # Generate random countries
-                    data[column_name] = [generate_country() for _ in range(num_rows)]
-                elif is_id(column_name):
+                    data[column_name] = [DataUtils.generate_country() for _ in range(num_rows)]
+                elif DataUtils.is_id(column_name):
                     # Generate IDs
-                    data[column_name] = generate_ids(values[0], num_rows)
+                    data[column_name] = DataUtils.generate_ids(values[0], num_rows)
                 else:
                     # Pick random from existing values
                     data[column_name] = [random.choice(values) for _ in range(num_rows)]
 
             elif col_type == 'int':
-                if is_id(column_name):
-                    data[column_name] = generate_ids("0", num_rows)
+                if DataUtils.is_id(column_name):
+                    data[column_name] = DataUtils.generate_ids("0", num_rows)
                 else:
                     # Generate random integers
                     min_val = properties['min']
@@ -96,7 +89,7 @@ class DataGenerationService:
                 start_str = properties['start']
                 end_str = properties['end']
                 data[column_name] = [
-                    generate_random_date(start_str, end_str) 
+                    DataUtils.generate_random_date(start_str, end_str) 
                     for _ in range(num_rows)
                 ]
             else:
@@ -148,13 +141,13 @@ class DataGenerationService:
                         }
                     }
                 )
-                if validate_config_dict(config_dict):
+                if ValidationUtils.validate_config_dict(config_dict):
                     break
             except Exception as e:
                 self.logger.error(f"Error creating config: {e}")
             tries -= 1
 
-        if not config_dict or not validate_config_dict(config_dict):
+        if not config_dict or not ValidationUtils.validate_config_dict(config_dict):
             self.logger.error("Could not generate a valid configuration after multiple attempts.")
             return
 
@@ -202,7 +195,7 @@ class DataGenerationService:
         result = self.openai_service.chat_openai(prompt)
         # Extract multiple JSON objects from the raw text
         try:
-            result = format_result_for_jsonl(result)
+            result = JSONUtils.format_result_for_jsonl(result)
             self.logger.info("\nThis is the corrected JSON content:\n" + result)
         except Exception as e:
             error_message = f"Error processing the OpenAI response: {e}"
@@ -214,7 +207,7 @@ class DataGenerationService:
         self.logger.info(f"Received {len(jsonl_entries)} JSONL entries from the model.")
 
         # Convert to CSV
-        jsonlist_to_csv(jsonl_entries, output_file, self.logger)
+        JSONUtils.jsonlist_to_csv(jsonl_entries, output_file, self.logger)
 
         # (Optional) You could add a row-count check here
         try:
@@ -262,7 +255,7 @@ class DataGenerationService:
         result = self.openai_service.chat_openai(prompt)
         # Extract multiple JSON objects from the raw text
         try:
-            result = format_result_for_jsonl(result)
+            result = JSONUtils.format_result_for_jsonl(result)
             self.logger.info("\nThis is the corrected JSON content:\n" + result)
         except Exception as e:
             error_message = f"Error processing the OpenAI response: {e}"
@@ -274,7 +267,7 @@ class DataGenerationService:
         self.logger.info(f"Received {len(jsonl_entries)} JSONL entries from the model.")
 
         # Convert to CSV
-        jsonlist_to_csv(jsonl_entries, output_file, self.logger)
+        JSONUtils.jsonlist_to_csv(jsonl_entries, output_file, self.logger)
 
         # (Optional) You could add a row-count check here
         try:

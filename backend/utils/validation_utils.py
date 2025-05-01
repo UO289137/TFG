@@ -1,41 +1,48 @@
-def validate_config_dict(config_dict: dict) -> bool:
+class ValidationUtils:
     """
-    Validate that the configuration dictionary has the required structure
-    for each data type (string, int, float, boolean, date).
+    Clase estática para validar diccionarios de configuración
+    en estructuras de generación de datos.
     """
-    columns = config_dict.get('columns', {})
-    if not columns:
-        return False
 
-    for _, properties in columns.items():
-        col_type = properties.get('type')
-
-        if col_type == 'string':
-            # Must have a non-empty 'values' list
-            if not properties.get('values'):
-                return False
-
-        elif col_type == 'int':
-            # Must have 'min' and 'max'
-            if 'min' not in properties or 'max' not in properties:
-                return False
-
-        elif col_type == 'float':
-            # Must have 'min' and 'max'
-            if 'min' not in properties or 'max' not in properties:
-                return False
-
-        elif col_type == 'date':
-            # Must have 'start' and 'end'
-            if 'start' not in properties or 'end' not in properties:
-                return False
-
-        elif col_type == 'boolean':
-            # boolean has no additional constraints
-            continue
-
-        else:
-            # Unknown type
+    @staticmethod
+    def validate_config_dict(config_dict: dict) -> bool:
+        """
+        Valida que el diccionario de configuración tenga la estructura
+        requerida para cada tipo de dato (string, int, float, boolean, date).
+        """
+        columns = config_dict.get('columns', {})
+        if not columns:
             return False
 
-    return True
+        for _, props in columns.items():
+            col_type = props.get('type')
+
+            if col_type == 'string':
+                # Debe tener una lista 'values' no vacía
+                if not props.get('values'):
+                    return False
+
+            elif col_type == 'int':
+                # Debe tener 'min' y 'max'
+                if 'min' not in props or 'max' not in props:
+                    return False
+
+            elif col_type == 'float':
+                # Debe tener 'min' y 'max'
+                if 'min' not in props or 'max' not in props:
+                    return False
+
+            elif col_type == 'date':
+                # Debe tener 'start' y 'end'
+                if 'start' not in props or 'end' not in props:
+                    return False
+
+            elif col_type == 'boolean':
+                # No requiere más validaciones
+                continue
+
+            else:
+                # Tipo desconocido
+                return False
+
+        return True
