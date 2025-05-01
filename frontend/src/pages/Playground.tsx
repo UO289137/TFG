@@ -2,7 +2,7 @@ import React from 'react';
 
 const WelcomeScreen: React.FC = () => {
   const tfgPurpose =
-    'Este Trabajo de Fin de Grado tiene como objetivo analizar y desarrollar soluciones innovadoras en el ámbito de la ingeniería, optimizando procesos y proponiendo mejoras estratégicas basadas en metodologías modernas. Aquí se abordarán tanto la parte teórica como la implementación práctica, garantizando una visión integral y profesional del proyecto.';
+    'Este Trabajo de Fin de Grado tiene como objetivo probar distintas alternativas altamente automatizadas para la generación de datos sintéticos y unificarlas en una aplicación web plenamente funcional para demostrar los conocimientos adquiridos durante el grado.';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -19,7 +19,7 @@ const WelcomeScreen: React.FC = () => {
               González
             </p>
             <p>
-              <span className="font-semibold">UO:</span> UO289137
+              <span className="font-semibold">UO:</span> 289137
             </p>
             <p>
               <span className="font-semibold">DNI:</span> 53775258Q
