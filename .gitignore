@@ -37,3 +37,14 @@ backend/venv/
 *.log
 tmp/
 *.swp
+
+
+# Archivos de pytest
+.pytest_cache/
+
+
+# Ajustes locales de VS Code (contienen rutas a tu venv)
+.vscode/
+
+# Variables de entorno
+.env
