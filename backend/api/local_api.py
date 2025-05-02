@@ -44,6 +44,12 @@ class WebAPI:
         @self.app.route("/generate", methods=["POST"])
         def generate():
             try:
+                # Calculamos tmp_dir en backend/tmp independientemente de donde arranquemos
+                current_dir = os.path.dirname(__file__)
+                parent_dir  = os.path.abspath(os.path.join(current_dir, os.pardir))
+                tmp_dir     = os.path.join(parent_dir, "tmp")
+                os.makedirs(tmp_dir, exist_ok=True)
+
                 # --- CTGAN / Gaussian uploads (form-data) ---
                 if 'generator_type' in request.form:
                     gtype = request.form['generator_type'].lower()
@@ -52,13 +58,13 @@ class WebAPI:
                     if not file_:
                         return jsonify({"error": "No file was uploaded"}), 400
 
-                    os.makedirs("tmp", exist_ok=True)
+                    # Generamos nombres y rutas usando tmp_dir
                     in_name  = f"{gtype}_{uuid.uuid4().hex}_input.csv"
-                    in_path  = os.path.join("tmp", in_name)
+                    in_path  = os.path.join(tmp_dir, in_name)
                     file_.save(in_path)
 
                     out_name = f"{gtype}_{uuid.uuid4().hex}_augmented.csv"
-                    out_path = os.path.join("tmp", out_name)
+                    out_path = os.path.join(tmp_dir, out_name)
 
                     if gtype == 'ctgan':
                         self.data_gen_service.generate_data_ctgan(in_path, rows, out_path)
@@ -70,10 +76,12 @@ class WebAPI:
                     if not os.path.exists(out_path):
                         return jsonify({"error": "CSV not created"}), 500
 
-                    return send_file(out_path,
-                                     mimetype="text/csv",
-                                     as_attachment=True,
-                                     download_name="synthetic_data.csv")
+                    return send_file(
+                        out_path,
+                        mimetype="text/csv",
+                        as_attachment=True,
+                        download_name="synthetic_data.csv"
+                    )
 
                 # --- JSON-based generators (Merlin/Gold/Real) ---
                 data = request.get_json()
@@ -86,15 +94,7 @@ class WebAPI:
                 if not gtype or not theme:
                     return jsonify({"error": "Missing 'generator_type' or 'theme'"}), 400
 
-               # Obtén la ruta del directorio padre
-                current_dir = os.path.dirname(__file__)
-                parent_dir  = os.path.abspath(os.path.join(current_dir, os.pardir))
-
-                # Apunta al tmp/ que está un nivel arriba
-                tmp_dir = os.path.join(parent_dir, "tmp")
-                os.makedirs(tmp_dir, exist_ok=True)
-
-                # Genera el nombre y la ruta del archivo dentro de ese tmp
+                # Preparamos ruta de salida en el mismo tmp_dir
                 filename = f"{gtype}_{uuid.uuid4().hex}.csv"
                 filepath = os.path.join(tmp_dir, filename)
 
@@ -108,27 +108,34 @@ class WebAPI:
                         output_file=filepath
                     )
                 elif gtype == "gold":
-                    self.data_gen_service.generate_data_gold(theme=theme,
-                                                            rows=rows,
-                                                            output_file=filepath)
+                    self.data_gen_service.generate_data_gold(
+                        theme=theme,
+                        rows=rows,
+                        output_file=filepath
+                    )
                 elif gtype == "real":
-                    self.data_gen_service.generate_data_real(theme=theme,
-                                                            rows=rows,
-                                                            output_file=filepath)
+                    self.data_gen_service.generate_data_real(
+                        theme=theme,
+                        rows=rows,
+                        output_file=filepath
+                    )
                 else:
                     return jsonify({"error": f"Unknown generator_type: {gtype}"}), 400
 
                 if not os.path.exists(filepath):
                     return jsonify({"error": "CSV not created"}), 500
 
-                return send_file(filepath,
-                                 mimetype="text/csv",
-                                 as_attachment=True,
-                                 download_name="synthetic_data.csv")
+                return send_file(
+                    filepath,
+                    mimetype="text/csv",
+                    as_attachment=True,
+                    download_name="synthetic_data.csv"
+                )
 
             except Exception as e:
                 self.logger.exception("Error in /generate endpoint")
                 return jsonify({"error": str(e)}), 500
+
 
     def run(self, host="0.0.0.0", port=5000, debug=True):
         self.app.run(host=host, port=port, debug=debug)
