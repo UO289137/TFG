@@ -273,11 +273,6 @@ const Generator: React.FC = () => {
       <div className="grid grid-cols-8 gap-6 mt-4">
         <div className="flex flex-col gap-3 w-full xl:col-span-6 col-span-8">
           <div className="border border-generator rounded-[5px] relative p-4">
-            {generalError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 p-2 rounded mb-4">
-                {generalError}
-              </div>
-            )}
             {model === 'ctgan' || model === 'gaussian' ? (
               <div>
                 <label className="block mb-2 text-[#414042]">
@@ -290,7 +285,7 @@ const Generator: React.FC = () => {
                   className="w-full"
                 />
                 {fileError && (
-                  <p className="text-red-500 text-xs mt-1">{fileError}</p>
+                  <p className="text-xs text-red-500 mt-1">{fileError}</p>
                 )}
               </div>
             ) : (
@@ -337,9 +332,7 @@ const Generator: React.FC = () => {
               </button>
             </aside>
             {generalError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
-                {generalError}
-              </div>
+              <div className="text-xs text-red-500 mt-1">{generalError}</div>
             )}
           </div>
 
