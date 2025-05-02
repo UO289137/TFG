@@ -200,8 +200,10 @@ const Generator: React.FC = () => {
         );
       }
     } finally {
-      clearTimeout(timeoutId);
+      // al acabar: resetea el input y el estado
+      setFile(null);
       setLoading(false);
+      clearTimeout(timeoutId);
     }
   };
 
