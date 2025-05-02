@@ -29,6 +29,8 @@ const Generator: React.FC = () => {
   const [fileName, setFileName] = useState('synthetic_data');
   const [fileNameError, setFileNameError] = useState('');
   const [themeError, setThemeError] = useState('');
+  const [fileError, setFileError] = useState<string>('');
+  const [generalError, setGeneralError] = useState<string>('');
 
   // Definir los rangos para cada modelo
   const rowRanges = {
@@ -56,6 +58,8 @@ const Generator: React.FC = () => {
     setThemeError('');
     setDownloadEnabled(false);
     setCsvContent('');
+    setGeneralError('');
+    setFileError('');
   }, [model]);
 
   // Manejador del Slider
@@ -81,14 +85,16 @@ const Generator: React.FC = () => {
 
   // Manejador para la subida de archivo (para ctgan)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGeneralError('');
+    setFileError('');
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       const fileName = selectedFile.name.toLowerCase();
       // Validación de extensión .csv
       if (!fileName.endsWith('.csv')) {
-        alert('Por favor, selecciona un archivo CSV.');
-        e.target.value = ''; // Reiniciar el input
-        setFile(null); // Asegurarse de no almacenar el archivo en el estado
+        setFileError('Por favor, selecciona un archivo con extensión .csv.');
+        e.target.value = '';
+        setFile(null);
         return;
       }
       // Validación del contenido del CSV: al menos 2 muestras de datos (excluyendo la cabecera)
@@ -99,10 +105,10 @@ const Generator: React.FC = () => {
           const totalFilas = results.data.length;
           // Se asume que la primera línea es la cabecera.
           if (totalFilas - 1 < 2) {
-            alert(
-              'El archivo CSV debe contener al menos 2 entradas de datos (excluyendo la cabecera).'
+            setFileError(
+              'El CSV debe tener al menos 2 filas de datos (sin contar la cabecera).'
             );
-            e.target.value = ''; // Reiniciar el input en caso de error
+            e.target.value = '';
             setFile(null);
             return;
           }
@@ -121,9 +127,11 @@ const Generator: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    setGeneralError('');
+    setFileError('');
     if (model === 'ctgan' || model === 'gaussian') {
       if (!file) {
-        alert('Por favor, selecciona un archivo CSV.');
+        setFileError('Debes seleccionar un archivo CSV antes de generar.');
         return;
       }
     } else if (!text.trim()) {
@@ -182,12 +190,14 @@ const Generator: React.FC = () => {
     } catch (error: any) {
       if (error.name === 'AbortError') {
         // Si la petición se aborta por timeout, notificamos al usuario
-        alert(
-          'La solicitud ha tardado más de 300 segundos y ha sido cancelada. Inténtalo nuevamente.'
+        setGeneralError(
+          'La petición superó el tiempo máximo de espera. Inténtalo más tarde.'
         );
       } else {
         console.error(error);
-        alert('Error generating data. Please try again.');
+        setGeneralError(
+          'Error al generar datos. Por favor, vuelve a intentarlo.'
+        );
       }
     } finally {
       clearTimeout(timeoutId);
@@ -201,16 +211,16 @@ const Generator: React.FC = () => {
       <TopBar containerClassName="justify-between">
         <aside className="flex justify-start items-center gap-3">
           <GeneratorIcon className="fill-[#414042] w-[26px] h-[23.59px]" />
-          <h2 className="text-[26px] font-primary font-medium">
-            The Generator
-          </h2>
+          <h2 className="text-[26px] font-primary font-medium">El Generador</h2>
         </aside>
       </TopBar>
 
       {/* Generator Bar */}
       <div className="flex justify-between items-center w-full">
         <div className="flex items-center gap-3">
-          <p className="sm:text-sm text-xs text-[#414042]">Model</p>
+          <p className="text-[#414042] lg:text-[20px] text-[18px] font-primary font-semibold">
+            Modelo:
+          </p>
           <div className="flex">
             <GeneratorSelect
               options={[
@@ -254,7 +264,7 @@ const Generator: React.FC = () => {
             className="md:py-2 p-1.5 md:px-3 px-2 border border-generator text-generator text-[#414042] lg:text-base md:text-sm text-xs"
             onClick={() => navigate('?model=merlin')}
           >
-            Tabular Data
+            Datos Tabulares
           </button>
         </div>
       </div>
@@ -263,6 +273,11 @@ const Generator: React.FC = () => {
       <div className="grid grid-cols-8 gap-6 mt-4">
         <div className="flex flex-col gap-3 w-full xl:col-span-6 col-span-8">
           <div className="border border-generator rounded-[5px] relative p-4">
+            {generalError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 p-2 rounded mb-4">
+                {generalError}
+              </div>
+            )}
             {model === 'ctgan' || model === 'gaussian' ? (
               <div>
                 <label className="block mb-2 text-[#414042]">
@@ -274,6 +289,9 @@ const Generator: React.FC = () => {
                   onChange={handleFileChange}
                   className="w-full"
                 />
+                {fileError && (
+                  <p className="text-red-500 text-xs mt-1">{fileError}</p>
+                )}
               </div>
             ) : (
               <div className="relative">
@@ -315,14 +333,19 @@ const Generator: React.FC = () => {
                 disabled={loading || (downloadEnabled && fileNameError !== '')}
               >
                 <PenIcon className="md:w-[22px] w-[20px] md:h-[22px] h-[20px] fill-white" />
-                {loading ? `Generating... (${elapsedTime}s)` : 'Generate'}
+                {loading ? `Generating... (${elapsedTime}s)` : 'Generar'}
               </button>
             </aside>
+            {generalError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+                {generalError}
+              </div>
+            )}
           </div>
 
           {/* Output */}
           <h2 className="text-[#414042] lg:text-[20px] text-[18px] font-primary font-semibold">
-            Output
+            Salida:
           </h2>
           <div className="flex flex-col items-center border border-generator rounded-[5px] justify-center p-4 overflow-y-auto max-h-[323px]">
             {loading ? (
@@ -388,10 +411,10 @@ const Generator: React.FC = () => {
             ) : (
               <>
                 <h3 className="text-[#414042] lg:text-base text-sm font-semibold">
-                  Not Result Yet
+                  No hay resultados todavía
                 </h3>
                 <p className="text-[#414042] lg:text-sm text-xs font-primary">
-                  The Generation has not been performed
+                  La generación aún no ha sido realizada
                 </p>
               </>
             )}
@@ -402,12 +425,12 @@ const Generator: React.FC = () => {
         <div className="col-span-8 xl:col-span-2">
           <span className="flex items-center justify-start gap-2 text-[#414042] md:text-[16px] text-sm mt-3 xl:mt-0 font-[400] rounded-[10px] p-2 text-center bg-generator text-white">
             <SettingsIcon className="w-[14px] h-[14px] stroke-[#414042] stroke-white" />
-            Settings
+            Ajustes
           </span>
           <div className="mt-3">
             <div>
               <span className="flex items-center justify-between md:text-base text-sm font-semibold">
-                Rows
+                Filas
                 <label className="p-1 bg-slate-50 rounded-md border lg:px-4 px-3 lg:py-1 py-0.8 lg:text-sm text-xs font-light">
                   {rows}
                 </label>
@@ -483,7 +506,7 @@ const Generator: React.FC = () => {
 
             <div className="mt-4 border-t pt-2">
               <h3 className="md:text-base text-sm font-semibold text-gray-700">
-                Examples
+                Ejemplos
               </h3>
               <ul className="mt-2">
                 {[
