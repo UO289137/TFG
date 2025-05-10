@@ -277,10 +277,11 @@ const Generator: React.FC = () => {
           <div className="border border-generator rounded-[5px] relative p-4">
             {model === 'ctgan' || model === 'gaussian' ? (
               <div>
-                <label className="block mb-2 text-[#414042]">
+                <label htmlFor="csvFile" className="block mb-2 text-[#414042]">
                   Selecciona un archivo CSV:
                 </label>
                 <input
+                  id="csvFile"
                   type="file"
                   accept=".csv"
                   onChange={handleFileChange}
@@ -312,6 +313,8 @@ const Generator: React.FC = () => {
                   <p className="text-xs text-red-500 mt-1">{themeError}</p>
                 )}
                 <button
+                  aria-label="Borrar texto"
+                  title="Borrar texto"
                   className="absolute top-0 right-0 z-10"
                   onClick={() => setText('')}
                 >
@@ -458,6 +461,8 @@ const Generator: React.FC = () => {
                   className={`w-10 h-6 rounded-full ${
                     downloadEnabled ? 'bg-generator' : 'bg-gray-300'
                   } relative focus:outline-none`}
+                  aria-label="Descargar archivo"
+                  title="Descargar archivo"
                 >
                   <span
                     className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${
@@ -471,10 +476,12 @@ const Generator: React.FC = () => {
                   <label
                     className="block text-[#414042] md:text-base text-sm"
                     style={{ fontSize: '14px' }}
+                    htmlFor="textInput"
                   >
                     Nombre del archivo (sin extensión):
                   </label>
                   <input
+                    id="textInput"
                     type="text"
                     value={fileName}
                     onChange={(e) => {
@@ -503,7 +510,7 @@ const Generator: React.FC = () => {
               <h3 className="md:text-base text-sm font-semibold text-gray-700">
                 Ejemplos
               </h3>
-              <ul className="mt-2">
+              <div className="mt-2">
                 {[
                   'Genera datos sobre los pacientes de un hospital. Quiero que añadas un identificador, grupo sanguineo, nombre, nacionalidad y enfermedad.',
                   'Genera datos sobre jugadores de baloncesto reales. Dame su nombre, edad, fecha de nacimiento, altura y una breve descripción.',
@@ -511,16 +518,19 @@ const Generator: React.FC = () => {
                   'Genera datos de actualidad sobre las noticias en el mundo. Quiero el título de la noticia, fecha y breve descripción.',
                   'Dame los mejores lugares para ver en la ciudad de Budapest. Quiero que me des el nombre del lugar, ubicación, año de referencia y breve historia.',
                 ].map((item, index, arr) => (
-                  <React.Fragment key={index}>
-                    <li className="md:text-sm text-xs text-gray-700 py-2">
-                      {item}
-                    </li>
+                  <div key={index}>
+                    <ul className="mt-2">
+                      <li className="md:text-sm text-xs text-gray-700 py-2">
+                        {item}
+                      </li>
+                    </ul>
+                    {/* Insertar el <hr> entre los elementos, no después del último */}
                     {index < arr.length - 1 && (
                       <hr className="border-t border-gray-300 my-2" />
                     )}
-                  </React.Fragment>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         </div>

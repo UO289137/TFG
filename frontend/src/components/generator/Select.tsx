@@ -101,44 +101,51 @@ const GeneratorSelect: React.FC<Props> = ({ options }) => {
   }, [location.search]);
 
   return (
-    <Select
-      options={options}
-      formatGroupLabel={formatGroupLabel}
-      placeholder="Select a model"
-      className="lg:w-[270px] md:w-[200px] w-[170px] lg:text-sm text-xs"
-      isSearchable={false}
-      value={selectedOption} // Set default selected value
-      onChange={(e) => {
-        navigate(`/generator?model=${e?.value}`);
-      }}
-      styles={{
-        control: (base) => ({
-          ...base,
-          outline: 'none',
-          border: '1px solid var(--generator-color)',
-          boxShadow: 'none',
-          borderRadius: '16px',
-          cursor: 'pointer',
-          backgroundColor: 'transparent',
-          color: 'white',
-          ':hover': {
+    <div>
+      <label htmlFor="generator-select" className="sr-only">
+        Selecciona un modelo
+      </label>
+      <Select
+        id="generator-select"
+        inputId="generator-select"
+        options={options}
+        formatGroupLabel={formatGroupLabel}
+        placeholder="Select a model"
+        className="lg:w-[270px] md:w-[200px] w-[170px] lg:text-sm text-xs"
+        isSearchable={false}
+        value={selectedOption} // Set default selected value
+        onChange={(e) => {
+          navigate(`/generator?model=${e?.value}`);
+        }}
+        styles={{
+          control: (base) => ({
+            ...base,
+            outline: 'none',
             border: '1px solid var(--generator-color)',
-          },
-        }),
-        menu: (base) => ({
-          ...base,
-          borderRadius: '16px',
-          overflow: 'hidden',
-          cursor: 'pointer',
-        }),
-      }}
-      components={{
-        SingleValue: customSingleValue,
-        Option: customOption,
-        DropdownIndicator: customDropdownIndicator,
-        IndicatorSeparator: () => null,
-      }}
-    />
+            boxShadow: 'none',
+            borderRadius: '16px',
+            cursor: 'pointer',
+            backgroundColor: 'transparent',
+            color: 'white',
+            ':hover': {
+              border: '1px solid var(--generator-color)',
+            },
+          }),
+          menu: (base) => ({
+            ...base,
+            borderRadius: '16px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+          }),
+        }}
+        components={{
+          SingleValue: customSingleValue,
+          Option: customOption,
+          DropdownIndicator: customDropdownIndicator,
+          IndicatorSeparator: () => null,
+        }}
+      />
+    </div>
   );
 };
 
