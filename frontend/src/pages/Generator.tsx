@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState, useEffect, useRef } from 'react';
 import TextRemove from '../components/Icons/TextRemove';
 import PenIcon from '../components/Icons/PenIcon';
 import Slider from '@mui/material/Slider';
@@ -45,6 +45,8 @@ const Generator: React.FC = () => {
     min: 1,
     max: 100,
   };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ajusta el valor de "rows" si está fuera del rango
   useEffect(() => {
@@ -203,6 +205,9 @@ const Generator: React.FC = () => {
       // al acabar: resetea el input y el estado
       setFile(null);
       setLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       clearTimeout(timeoutId);
     }
   };
@@ -281,6 +286,7 @@ const Generator: React.FC = () => {
                   Selecciona un archivo CSV:
                 </label>
                 <input
+                  ref={fileInputRef}
                   id="csvFile"
                   type="file"
                   accept=".csv"
