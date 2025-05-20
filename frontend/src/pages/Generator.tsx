@@ -433,12 +433,26 @@ const Generator: React.FC = () => {
           </span>
           <div className="mt-3">
             <div>
-              <span className="flex items-center justify-between md:text-base text-sm font-semibold">
-                Filas
-                <label className="p-1 bg-slate-50 rounded-md border lg:px-4 px-3 lg:py-1 py-0.8 lg:text-sm text-xs font-light">
-                  {rows}
+              <div className="flex items-center justify-between md:text-base text-sm font-semibold">
+                <label htmlFor="rowsInput" className="font-medium">
+                  Filas
                 </label>
-              </span>
+                <input
+                  id="rowsInput"
+                  type="number"
+                  value={rows}
+                  min={min}
+                  max={max}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) {
+                      // fuerza al rango [min, max]
+                      setRows(Math.min(Math.max(v, min), max));
+                    }
+                  }}
+                  className="p-1 border bg-slate-50 rounded-md w-18 text-center"
+                />
+              </div>
               <Slider
                 value={rows}
                 onChange={handleRows}
